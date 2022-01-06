@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import NewsItem from './NewsItem'
 import Spinner from './Spinner';
 import PropTypes from 'prop-types'
+import InfiniteScroll from "react-infinite-scroll-component";
 
 
 export default class News extends Component {
@@ -24,8 +25,9 @@ export default class News extends Component {
         super(props);
         this.state ={
             articles: [],
-            loading:false,
-            page:1
+            loading:true,
+            page:1,
+            totalResults: 0
         }
         document.title = `${this.capitalizeFirstLetter(this.props.category)} - Pratik-News`;
     }
@@ -35,7 +37,8 @@ export default class News extends Component {
         this.setState({loading:true});
         let data = await fetch(url);
         let parseData = await data.json()
-        this.setState({articles:parseData.articles,
+        this.setState({
+            articles:parseData.articles,
             totalResults:parseData.totalResults,
             loading:false})
     }
@@ -51,23 +54,40 @@ export default class News extends Component {
                 this.setState({page: this.state.page +1})
                 this.updateNews();
     }
+    
+     fetchMoreData = async () => {
+      this.setState({page:this.state.page + 1})
+      const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c8708c1dd34f4188a3625d77599fabe7&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+      let data = await fetch(url);
+      let parseData = await data.json()
+      this.setState({
+          articles:this.state.articles.concat(parseData.articles),
+          totalResults:parseData.totalResults,
+        })
+  };
     render() {
         return (
-            <div className='container my-3'>
-                <h1 className='text-center'style={{margin: '35px 0px'}}>Top Headlines from {this.capitalizeFirstLetter(this.props.category)}</h1>
+            <>
+                <h1 className='text-center'style={{margin: '35px 0px'}}>Top {this.capitalizeFirstLetter(this.props.category)} Headlines</h1>
                 {this.state.loading && <Spinner/>}
+                        <InfiniteScroll
+                            dataLength={this.state.articles.length}
+                            next={this.fetchMoreData}
+                            hasMore={this.state.articles.length !== this.state.totalResults}
+                            loader={<Spinner/>}
+                            >
+                    <div className="container">
+
                 <div className="row">
-                {!this.state.loading && this.state.articles.map((element) =>{
-                return <div className="col-md-4" key={element.url}>
-                    <NewsItem  title={element.title?element.title:""} description={element.description?element.description:""} imageUrl={element.urlToImage?element.urlToImage:"https://www.gannett-cdn.com/presto/2021/12/31/PDTF/10f05d3a-a16f-4176-8724-e598373a79fb-12302021_peacbowl2h-7.jpg?auto=webp&crop=2399,1350,x0,y122&format=pjpg&width=1200"} newsUrl={element.url} author={element.author} date={element.publishedAt} source={element.source.name}/>
+                    {this.state.articles.map((element) =>{
+                        return <div className="col-md-4" key={element.url}>
+                        <NewsItem  title={element.title?element.title:""} description={element.description?element.description:""} imageUrl={element.urlToImage?element.urlToImage:"https://www.gannett-cdn.com/presto/2021/12/31/PDTF/10f05d3a-a16f-4176-8724-e598373a79fb-12302021_peacbowl2h-7.jpg?auto=webp&crop=2399,1350,x0,y122&format=pjpg&width=1200"} newsUrl={element.url} author={element.author} date={element.publishedAt} source={element.source.name}/>
                 </div>
             })} 
-                </div>
-                <div className="container d-flex justify-content-between">
-                <button disabled={this.state.page<=1} type="button" className="btn btn-dark mx-2" onClick={this.handelPrevClick}> &larr; Previous</button>
-                <button disabled={this.state.page + 1 > Math.ceil(this.state.totalResults/this.props.pageSize)} type="button" className="btn btn-dark mx-2" onClick={this.handelNextClick}> Next &rarr;</button>
-                </div>
             </div>
+            </div>
+            </InfiniteScroll>
+            </>
         )
     }
 }
