@@ -30,7 +30,7 @@ const News = (props)=>{
     }
 
     useEffect(() => {
-        document.title = `${capitalizeFirstLetter(props.category)} - NewsMonkey`;
+        document.title = `${capitalizeFirstLetter(props.category)} - Pratik-News`;
         updateNews(); 
     }, [])
 
@@ -73,7 +73,7 @@ const News = (props)=>{
 
 News.defaultProps = {
     country: 'in',
-    pageSize: 8,
+    pageSize: 6,
     category: 'general',
 }
 
